@@ -1,17 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[2]:
-
-
 import yahoo_fin.stock_info as yf
 import pandas as pd
 from pandas_datareader import data
 import plotly.express as px
-
-
-# In[3]:
-
 
 def tickers():
     t=[]
@@ -20,10 +13,6 @@ def tickers():
         ticker=str(input('''Inserisci ticker dell'impresa numero ''' + str(i) +':'))
         t.append(ticker)
     return t
-
-
-# In[4]:
-
 
 def correggi(stato_patrimoniale):
     stato_patrimoniale=stato_patrimoniale.fillna(0)
@@ -47,11 +36,6 @@ def correggi(stato_patrimoniale):
     return stato_patrimoniale
     
     
-
-
-# In[5]:
-
-
 def Calcolo_ROIC_FAUSTMANN (t):
     ROIC=[]
     FAUSTMANN=[]
@@ -84,17 +68,10 @@ def Calcolo_ROIC_FAUSTMANN (t):
     return SIGFRIDI
         
 
-
-# In[6]:
-
-
 def Grafico(SIGFRIDI):
     fig = px.scatter(SIGFRIDI, x="ROIC", y="FAUSTMANN", 
                  color='Ticker')
     return fig.show()
-
-
-# In[7]:
 
 
 def Programma():
@@ -112,9 +89,6 @@ def Programma():
         else:
             print('Ciao')
             break
-
-
-# In[8]:
 
 
 Programma()
