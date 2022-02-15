@@ -6,41 +6,41 @@ import plotly.express as px
 def tickers():
     t = []
     #t =yf.tickers_ftse100()
-    nt = int(input('Inserire numero di aziende da confrontare:'))
+    nt = int(input('Insert number of stock:'))
     for i in range(nt):
-        ticker = str(input('''Inserisci ticker dell'impresa numero ''' + str(i) + ':'))
+        ticker = str(input('''Insert the ticker of the stock number ''' + str(i) + ':'))
         t.append(ticker)
     return t
 
 
-def correggi(stato_patrimoniale):
-    stato_patrimoniale = stato_patrimoniale.fillna(0)
+def correct(balance_sheet):
+    balance_sheet = balance_sheet.fillna(0)
 
     try:
-        stato_patrimoniale['longTermDebt']
+        balance_sheet['longTermDebt']
     except:
-        stato_patrimoniale['longTermDebt'] = [0, 0, 0, 0]
+        balance_sheet['longTermDebt'] = [0, 0, 0, 0]
     try:
-        stato_patrimoniale['shortLongTermDebt']
+        balance_sheet['shortLongTermDebt']
     except:
-        stato_patrimoniale['shortLongTermDebt'] = [0, 0, 0, 0]
+        balance_sheet['shortLongTermDebt'] = [0, 0, 0, 0]
     try:
-        stato_patrimoniale['cash']
+        balance_sheet['cash']
     except:
-        stato_patrimoniale['cash'] = [0, 0, 0, 0]
+        balance_sheet['cash'] = [0, 0, 0, 0]
     try:
-        stato_patrimoniale['shortTermInvestments']
+        balance_sheet['shortTermInvestments']
     except:
-        stato_patrimoniale['shortTermInvestments'] = [0, 0, 0, 0]
+        balance_sheet['shortTermInvestments'] = [0, 0, 0, 0]
     try:
-        stato_patrimoniale['preferredStock']
+        balance_sheet['preferredStock']
     except:
-        stato_patrimoniale['preferredStock'] = [0, 0, 0, 0]
+        balance_sheet['preferredStock'] = [0, 0, 0, 0]
 
-    return stato_patrimoniale
+    return balance_sheet
 
 
-def Calcolo_ROIC_FAUSTMANN(t):
+def Calculation_ROIC_FAUSTMANN(t):
     ROIC = []
     FAUSTMANN = []
     lista = []
@@ -48,41 +48,40 @@ def Calcolo_ROIC_FAUSTMANN(t):
     for x in t:
 
         try:
-            stato_patrimoniale = yf.get_balance_sheet(x)
-            stato_patrimoniale = stato_patrimoniale.T
-            stato_patrimoniale = correggi(stato_patrimoniale)
-
-            totalAssets = stato_patrimoniale['totalAssets']
-            totalLiab = stato_patrimoniale['totalLiab']
-            longTermDebt = stato_patrimoniale['longTermDebt']
-            shortLongTermDebt = stato_patrimoniale['shortLongTermDebt']
-            totalStockholderEquity = stato_patrimoniale['totalStockholderEquity']
-            cash = stato_patrimoniale['cash'] + stato_patrimoniale['shortTermInvestments']
-            preferredStock = stato_patrimoniale['preferredStock']
+            balance_sheet = yf.get_balance_sheet(x)
+            balance_sheet = balance_sheet.T
+            balance_sheet = correct(balance_sheet)
+            totalAssets = balance_sheet['totalAssets']
+            totalLiab = balance_sheet['totalLiab']
+            longTermDebt = balance_sheet['longTermDebt']
+            shortLongTermDebt = balance_sheet['shortLongTermDebt']
+            totalStockholderEquity = balance_sheet['totalStockholderEquity']
+            cash = balance_sheet['cash'] + balance_sheet['shortTermInvestments']
+            preferredStock = balance_sheet['preferredStock']
 
             BookValueEquity = totalAssets.iloc[0] - totalLiab.iloc[0]
             Debt = longTermDebt.iloc[0] + shortLongTermDebt.iloc[0]
             InvestedCapital = totalStockholderEquity[0] + Debt - cash[0]
 
-            conto_economico = yf.get_income_statement(x)
-            ebit = conto_economico.T['ebit']
+            income_statement = yf.get_income_statement(x)
+            ebit = income_statement.T['ebit']
             ROIC.append(ebit[0] / InvestedCapital)
 
-            MC = yf.get_quote_table(x, dict_result=False).iloc[11, 1]
-            if MC[-1] == "B":
-                MC = MC.replace("B", "")
-                MC = float(MC)
-                MC = MC * 1000000000
-            elif MC[-1] == "M":
-                MC = MC.replace("M", "")
-                MC = float(MC)
-                MC = MC * 1000000
+            MarketCap = yf.get_quote_table(x, dict_result=False).iloc[11, 1]
+            if MarketCap[-1] == "B":
+                MarketCap = MarketCap.replace("B", "")
+                MarketCap = float(MarketCap)
+                MarketCap = MarketCap * 1000000000
+            elif MarketCap[-1] == "M":
+                MarketCap = MarketCap.replace("M", "")
+                MarketCap = float(MarketCap)
+                MarketCap = MarketCap * 1000000
             else:
-                MC = MC.replace("T", "")
-                MC = float(MC)
-                MC = MC * 1000000000000
+                MarketCap = MarketCap.replace("T", "")
+                MarketCap = float(MarketCap)
+                MarketCap = MarketCap * 1000000000000
 
-            FAUSTMANN.append(MC / totalStockholderEquity[0])
+            FAUSTMANN.append(MarketCap / totalStockholderEquity[0])
         except:
             lista.append(x)
             continue
@@ -91,35 +90,35 @@ def Calcolo_ROIC_FAUSTMANN(t):
         t.remove(x)
 
     Data = {'Ticker': t, 'ROIC': ROIC, 'FAUSTMANN': FAUSTMANN}
-    SIGFRIDI = pd.DataFrame(Data)
+    SIGFRIDS = pd.DataFrame(Data)
 
-    return SIGFRIDI
+    return SIGFRIDS
 
 
-def Grafico(SIGFRIDI):
-    fig = px.scatter(SIGFRIDI, x="ROIC", y="FAUSTMANN",
+def Graphic(SIGFRIDS):
+    fig = px.scatter(SIGFRIDS, x="ROIC", y="FAUSTMANN",
                      color='Ticker')
     return fig.show()
 
 
-def Programma():
+def Program():
     while True:
         t = tickers()
-        SIGFRIDI = Calcolo_ROIC_FAUSTMANN(t)
-        excel = pd.ExcelWriter('AZIONI.xlsx', engine='xlsxwriter')
-        SIGFRIDI.to_excel(excel, sheet_name='Azione')
+        SIGFRIDS = Calculation_ROIC_FAUSTMANN(t)
+        excel = pd.ExcelWriter('Sigfrids.xlsx', engine='xlsxwriter')
+        SIGFRIDS.to_excel(excel, sheet_name='Stocks')
         excel.save()
-        Grafico(SIGFRIDI)
+        Graphic(SIGFRIDS)
         while True:
-            risposta = str(input('Vuoi visualizzare un nuovo grafico? (si/no): '))
-            if risposta in ('si', 'no'):
+            response = str(input('Do you want to visualize a new Graphic? (yes/no): '))
+            if response in ('yes', 'no'):
                 break
-            print('Input non valido.')
-        if risposta == 'si':
+            print('Input not valid.')
+        if response == 'yes':
             continue
         else:
-            print('Ciao')
+            print('Bye')
             break
 
 
-Programma()
+Program()
